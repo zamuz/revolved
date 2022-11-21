@@ -20,6 +20,8 @@
 
 #include "enamel.h"
 #include "watch_model.h"
+#include <pebble-events/pebble-events.h>
+#include <ctype.h>
 
 static Window *window;
 static Layer *clock_layer;
@@ -82,30 +84,74 @@ static void draw_dots(GContext *ctx, const GPoint *center, const ClockState *cur
 }
 
 static void draw_center(GContext *ctx, const GRect *layer_bounds, const ClockState *current_state) {
-    graphics_context_set_fill_color(ctx, current_state->color_config.center_color);
-    int32_t center_radius = current_state->center_state.center_radius;
+    graphics_context_set_fill_color(ctx, enamel_get_center_color());
+    int32_t center_radius = CENTER_RADIUS;
     GRect circle_frame = (GRect) { .size = GSize(center_radius * 2, center_radius * 2) };
     grect_align(&circle_frame, layer_bounds, GAlignCenter, false /* clips */);
     graphics_fill_radial(ctx, circle_frame, GOvalScaleModeFitCircle, center_radius, 0,
                          TRIG_MAX_ANGLE);
 }
 
+static void draw_circle(GContext *ctx, const GRect *layer_bounds, int32_t radius) {
+    graphics_context_set_fill_color(ctx, enamel_get_bg_color());
+    int32_t center_radius = CENTER_RADIUS - radius + 3;
+    GRect circle_frame = (GRect) { .size = GSize(CENTER_RADIUS * 2 + 6, CENTER_RADIUS * 2 + 6) };
+    grect_align(&circle_frame, layer_bounds, GAlignCenter, false /* clips */);
+    graphics_fill_radial(ctx, circle_frame, GOvalScaleModeFitCircle, center_radius, 0, TRIG_MAX_ANGLE);
+}
+
 static void draw_clock(Layer *layer, GContext *ctx) {
   const ClockState *current_state = &s_clock_state;
   GRect layer_bounds = layer_get_bounds(layer);
   GPoint center_point = grect_center_point(&layer_bounds);
-  draw_center(ctx, &layer_bounds, current_state);
+  graphics_context_set_fill_color(ctx, enamel_get_bg_color());
+  graphics_fill_rect(ctx, layer_bounds, 0, (GCornerMask)NULL);
   draw_dots(ctx, &center_point, current_state);
+  draw_center(ctx, &layer_bounds, current_state);
+  time_t now = time(NULL);
+  int32_t offset = 0;
+
+  // clock
   static char s_time_string[10];
-  strftime(s_time_string, sizeof(s_time_string), "%I:%M", &s_clock_state.current_time);
+  strftime(s_time_string, sizeof(s_time_string), "%H:%M", localtime(&now));
+  digital_font = fonts_get_system_font(enamel_get_clock_font());
   GSize text_size = graphics_text_layout_get_content_size(s_time_string, digital_font, layer_bounds,
                                                           GTextOverflowModeFill,
                                                           GTextAlignmentCenter);
-  // TODO: Configurable?
-  graphics_context_set_text_color(ctx, GColorBlack);
-  GRect text_box = GRect(90 - text_size.w / 2, 90 - text_size.h * 2 / 3, text_size.w, text_size.h);
+  graphics_context_set_text_color(ctx, enamel_get_text_color());
+
+  // date
+  if (enamel_get_display_date()) {
+      static char s_date_string[10];
+      offset = text_size.h;
+      strftime(s_date_string, sizeof(s_date_string), "%a %d", localtime(&now));
+      char *c = s_date_string;
+      while (*c) {
+          *c = toupper((unsigned char)*c);
+	  c++;
+      }
+      GFont date_font = fonts_get_system_font(FONT_KEY_GOTHIC_14);
+      GSize date_size = graphics_text_layout_get_content_size(s_date_string, date_font, layer_bounds,
+                                                              GTextOverflowModeFill,
+                                                              GTextAlignmentCenter);
+      graphics_context_set_text_color(ctx, enamel_get_text_color());
+      GRect date_text_box = GRect(center_point.x - date_size.w / 2,
+		                  center_point.y - date_size.h * 2 / 3 + offset * .6,
+                                  date_size.w, date_size.h);
+      graphics_draw_text(ctx, s_date_string, date_font, date_text_box, GTextOverflowModeFill,
+                         GTextAlignmentCenter, NULL);
+  }
+  GRect text_box = GRect(center_point.x - text_size.w / 2,
+		         center_point.y - text_size.h * 2 / 3 - offset * .1,
+		         text_size.w, text_size.h);
   graphics_draw_text(ctx, s_time_string, digital_font, text_box, GTextOverflowModeFill,
                      GTextAlignmentCenter, NULL);
+
+  int32_t center_radius = current_state->center_state.center_radius;
+  if (center_radius < CENTER_RADIUS) {
+      draw_circle(ctx, &layer_bounds, center_radius);
+  }
+
 }
 
 static void prv_app_did_focus(bool did_focus) {
@@ -124,7 +170,7 @@ static void window_load(Window *window) {
   const GRect bounds = layer_get_bounds(window_layer);
 
   // TODO: Configurable?
-  window_set_background_color(window, GColorBlack);
+  //window_set_background_color(window, enamel_get_bg_color());
 
   clock_layer = layer_create(bounds);
   layer_set_update_proc(clock_layer, draw_clock);
@@ -148,10 +194,12 @@ static void init(void) {
   app_focus_service_subscribe_handlers((AppFocusHandlers) {
     .did_focus = prv_app_did_focus,
   });
+  events_app_message_open();
 }
 
 static void deinit(void) {
   enamel_deinit();
+  watch_model_deinit();
   window_destroy(window);
 }
 

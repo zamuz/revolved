@@ -20,6 +20,9 @@
 
 #include "watch_model.h"
 #include "enamel.h"
+#include <pebble.h>
+
+static EventHandle* s_evt_handler;
 
 typedef struct {
   DotState start_state;
@@ -110,7 +113,8 @@ static DotState prv_get_dot_start_state(int32_t ordinal) {
   }
   return (DotState) {
     .ordinal = ordinal,
-    .distance = DOT_ANIMATION_STARTING_DISTANCE + OUTER_DOT_DISTANCE,
+    //.distance = DOT_ANIMATION_STARTING_DISTANCE + OUTER_DOT_DISTANCE,
+    .distance = DOT_ANIMATION_STARTING_DISTANCE + get_dot_distance(),
     .angle = angle
   };
 }
@@ -119,7 +123,8 @@ static DotState prv_get_dot_end_state(uint32_t ordinal) {
   int32_t angle = (ordinal == 0) ? TRIG_MAX_ANGLE : (ordinal * TRIG_MAX_ANGLE / 12);
   return (DotState) {
     .ordinal = ordinal,
-    .distance = OUTER_DOT_DISTANCE,
+    //.distance = OUTER_DOT_DISTANCE,
+    .distance = get_dot_distance(),
     .angle = angle
   };
 }
@@ -153,6 +158,21 @@ static void prv_finish_animation(Animation *animation, bool finished, void *cont
   tick_timer_service_subscribe(MINUTE_UNIT, prv_handle_time_update);
 }
 
+int32_t get_dot_distance(void) {
+  int32_t distance;
+  switch (PBL_PLATFORM_TYPE_CURRENT) {
+    case PlatformTypeChalk:
+    case PlatformTypeEmery:
+      distance = CENTER_RADIUS/2 + 45;
+      break;
+    default:
+      distance = CENTER_RADIUS/2 + 40;
+      //distance = CENTER_RADIUS/2 + 36;
+      //distance = CENTER_RADIUS/2 + 38;
+  }
+  return distance;
+}
+
 void watch_model_start_intro(void) {
   Animation *const center_animation = prv_make_center_animation();
   Animation *all_animations[NUM_DOTS_TOTAL + 1];
@@ -169,14 +189,17 @@ void watch_model_start_intro(void) {
 
 ColorConfig prv_make_current_color_config() {
   return (ColorConfig) {
-    .center_color = enamel_get_theme_color(),
-    .hour_dot_color = enamel_get_theme_color(),
-    .minute_dot_color = GColorWhite,
-    .neutral_dot_color = GColorDarkGray,
+    .center_color = enamel_get_center_color(),
+    .hour_dot_color = enamel_get_hour_color(),
+    .minute_dot_color = enamel_get_minute_color(),
+    .neutral_dot_color = enamel_get_dot_color(),
+    .bg_color = enamel_get_bg_color(),
+    .text_color = enamel_get_text_color(),
   };
 }
 
-static void prv_msg_received_handler(DictionaryIterator *iter, void *context) {
+//static void prv_msg_received_handler(DictionaryIterator *iter, void *context) {
+static void prv_msg_received_handler(void *context) {
   ColorConfig current_config = prv_make_current_color_config();
   watch_model_handle_color_config_change(&current_config);
 }
@@ -192,6 +215,10 @@ void watch_model_init(void) {
   }
   CenterState start_center_state = (CenterState) { 0 };
   watch_model_handle_center_change(&start_center_state);
-  enamel_register_custom_inbox_received(prv_msg_received_handler); 
+  //enamel_register_custom_inbox_received(prv_msg_received_handler);
+  s_evt_handler = enamel_settings_received_subscribe(prv_msg_received_handler, NULL);
 }
 
+void watch_model_deinit(void) {
+  enamel_settings_received_unsubscribe(s_evt_handler);
+}

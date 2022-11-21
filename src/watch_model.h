@@ -16,24 +16,36 @@
     You should have received a copy of the GNU General Public License
     along with Revolver.  If not, see <http://www.gnu.org/licenses/>.
 
+    OUTER_DOT_DISTANCE 66
+    NEUTRAL_DOT_RADIUS 3
+    HOUR_DOT_RADIUS 5
+    MINUTE_DOT_RADIUS 3
+    CENTER_RADIUS 45
+    
+    DOT_ANIMATION_STARTING_DISTANCE 50
+    DOT_ANIMATION_LENGTH 200
+    DOT_ANIMATION_DELAY 80
+    
+    CENTER_ANIMATION_LENGTH 400
+    CENTER_ANIMATION_DELAY 0
 */
 
 #include <pebble.h>
 
 #define NUM_DOTS_TOTAL (12)
 
-#define OUTER_DOT_DISTANCE 72
+#define OUTER_DOT_DISTANCE 66
 #define NEUTRAL_DOT_RADIUS 3
 #define HOUR_DOT_RADIUS 5
 #define MINUTE_DOT_RADIUS 3
 #define CENTER_RADIUS 45
 
-#define DOT_ANIMATION_STARTING_DISTANCE 25
-#define DOT_ANIMATION_LENGTH 150
-#define DOT_ANIMATION_DELAY 70
+#define DOT_ANIMATION_STARTING_DISTANCE 52
+#define DOT_ANIMATION_LENGTH 225
+#define DOT_ANIMATION_DELAY 80
 
 #define CENTER_ANIMATION_LENGTH 400
-#define CENTER_ANIMATION_DELAY 50
+#define CENTER_ANIMATION_DELAY 0
 
 typedef enum {
   DotType_NEUTRAL_DOT = 0,
@@ -58,6 +70,8 @@ typedef struct {
   GColor hour_dot_color;
   GColor minute_dot_color;
   GColor neutral_dot_color;
+  GColor bg_color;
+  GColor text_color;
 } ColorConfig;
 
 typedef struct {
@@ -69,10 +83,13 @@ typedef struct {
 
 void watch_model_start_intro(void);
 void watch_model_init(void);
+void watch_model_deinit(void);
 
 void watch_model_handle_center_change(const CenterState *state);
 void watch_model_handle_dot_change(const DotState *state);
 void watch_model_handle_time_change(const struct tm *tick_time);
 void watch_model_handle_color_config_change(const ColorConfig *config);
+
+int32_t get_dot_distance(void);
 
 DotType get_dot_type(uint32_t ordinal, const struct tm *tick_time);

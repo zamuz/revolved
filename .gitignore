@@ -3,3 +3,5 @@ build
 *.swp
 .DS_Store
 tags
+node_modules/
+package-lock.json

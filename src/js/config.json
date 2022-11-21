@@ -1,14 +1,80 @@
 [
 {
+  "type": "heading",
+  "defaultValue": "Revolved"
+},
+{
   "type": "section",
   "items": [
     {
       "type": "color",
-      "id": "theme_color",
-      "appKey": "theme_color",
-      "defaultValue": "FF0000",
-      "label": "Theme color",
-      "sunlight": true
+      "id": "center_color",
+      "messageKey": "center_color",
+      "defaultValue": "FFFFFF",
+      "label": "Center color",
+      "allowGray": true
+    },
+    {
+      "type": "color",
+      "id": "hour_color",
+      "messageKey": "hour_color",
+      "defaultValue": "FFFFFF",
+      "label": "Hour color",
+      "allowGray": true
+    },
+    {
+      "type": "color",
+      "id": "minute_color",
+      "messageKey": "minute_color",
+      "defaultValue": "FFFFFF",
+      "label": "Minute color",
+      "allowGray": true
+    },
+    {
+      "type": "color",
+      "id": "dot_color",
+      "messageKey": "dot_color",
+      "defaultValue": "AAAAAA",
+      "label": "Dot color",
+      "allowGray": true
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "messageKey": "bg_color",
+      "defaultValue": "000000",
+      "label": "Background color",
+      "allowGray": true
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "messageKey": "text_color",
+      "defaultValue": "000000",
+      "label": "Text color",
+      "allowGray": true
+    },
+    {
+      "type": "select",
+      "messageKey": "clock_font",
+      "label": "Clock font",
+      "defaultValue": "RESOURCE_ID_LECO_26_BOLD_NUMBERS_AM_PM",
+      "options": [
+        {
+	  "label": "Leco",
+	  "value": "RESOURCE_ID_LECO_26_BOLD_NUMBERS_AM_PM"
+	},
+	{
+          "label": "Gothic",
+	  "value": "RESOURCE_ID_GOTHIC_28_BOLD"
+	}
+      ]
+    },
+    {
+      "type": "toggle",
+      "messageKey": "display_date",
+      "defaultValue": false,
+      "label": "Display date?"
     }
   ]
 },
