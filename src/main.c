@@ -109,11 +109,15 @@ static void draw_clock(Layer *layer, GContext *ctx) {
   draw_dots(ctx, &center_point, current_state);
   draw_center(ctx, &layer_bounds, current_state);
   time_t now = time(NULL);
+  struct tm *current_time = localtime(&now);
+  if (!clock_is_24h_style()) {
+      current_time->tm_hour = current_time->tm_hour % 12;
+  }
   int32_t offset = 0;
 
   // clock
   static char s_time_string[10];
-  strftime(s_time_string, sizeof(s_time_string), "%H:%M", localtime(&now));
+  strftime(s_time_string, sizeof(s_time_string), "%H:%M", current_time);
   digital_font = fonts_get_system_font(enamel_get_clock_font());
   GSize text_size = graphics_text_layout_get_content_size(s_time_string, digital_font, layer_bounds,
                                                           GTextOverflowModeFill,
