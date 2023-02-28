@@ -166,9 +166,9 @@ int32_t get_dot_distance(void) {
       distance = CENTER_RADIUS/2 + 45;
       break;
     default:
-      distance = CENTER_RADIUS/2 + 40;
+      //distance = CENTER_RADIUS/2 + 40;
       //distance = CENTER_RADIUS/2 + 36;
-      //distance = CENTER_RADIUS/2 + 38;
+      distance = CENTER_RADIUS/2 + 37;
   }
   return distance;
 }
