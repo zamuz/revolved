@@ -72,6 +72,12 @@
     },
     {
       "type": "toggle",
+      "messageKey": "leading_zero",
+      "defaultValue": false,
+      "label": "Display hour with leading zero?"
+    },
+    {
+      "type": "toggle",
       "messageKey": "display_date",
       "defaultValue": false,
       "label": "Display date?"

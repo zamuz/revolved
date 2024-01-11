@@ -110,16 +110,24 @@ static void draw_clock(Layer *layer, GContext *ctx) {
   draw_center(ctx, &layer_bounds, current_state);
   time_t now = time(NULL);
   struct tm *current_time = localtime(&now);
-  if (!clock_is_24h_style()) {
-      current_time->tm_hour = current_time->tm_hour % 12;
-  }
   int32_t offset = 0;
 
   // clock
   static char s_time_string[10];
-  strftime(s_time_string, sizeof(s_time_string), "%H:%M", current_time);
+  char *s_time_string_trimmed = &s_time_string[0];
+  if (clock_is_24h_style()) {
+      strftime(s_time_string, sizeof(s_time_string), "%H:%M", current_time);
+  }
+  else {
+      strftime(s_time_string, sizeof(s_time_string), enamel_get_leading_zero() ? "%I:%M" : "%l:%M", current_time);
+      if (!enamel_get_leading_zero()) {
+          while(isspace((unsigned char)*s_time_string_trimmed))
+              s_time_string_trimmed = s_time_string_trimmed + 1;
+      }
+  }
   digital_font = fonts_get_system_font(enamel_get_clock_font());
-  GSize text_size = graphics_text_layout_get_content_size(s_time_string, digital_font, layer_bounds,
+  GSize text_size = graphics_text_layout_get_content_size(s_time_string_trimmed,
+                                                          digital_font, layer_bounds,
                                                           GTextOverflowModeFill,
                                                           GTextAlignmentCenter);
   graphics_context_set_text_color(ctx, enamel_get_text_color());
@@ -148,7 +156,7 @@ static void draw_clock(Layer *layer, GContext *ctx) {
   GRect text_box = GRect(center_point.x - text_size.w / 2,
 		         center_point.y - text_size.h * 2 / 3 - offset * .1,
 		         text_size.w, text_size.h);
-  graphics_draw_text(ctx, s_time_string, digital_font, text_box, GTextOverflowModeFill,
+  graphics_draw_text(ctx, s_time_string_trimmed, digital_font, text_box, GTextOverflowModeFill,
                      GTextAlignmentCenter, NULL);
 
   int32_t center_radius = current_state->center_state.center_radius;
